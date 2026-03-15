@@ -1,0 +1,3 @@
+[submodule "ESP32-Bus-Pirate-Scripts"]
+	path = ESP32-Bus-Pirate-Scripts
+	url = git@github.com:austin2118ace/ESP32-Bus-Pirate-Scripts

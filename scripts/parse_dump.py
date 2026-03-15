@@ -24,6 +24,14 @@ class Packet:
                 f"Read/Write: {self.read_write}\n"
                 f"Data: {self.data}")
 
+    def __eq__(self, other):
+        return (
+                self.packet_num == other.packet_num and
+                self.addr == other.addr and
+                self.read_write == other.read_write and
+                self.data == other.data
+                )
+
     @staticmethod
     def chunk_line(line):
         return [chunk for chunk in line.split(" ")[:-1] if chunk not in CHUNKS_TO_SKIP]

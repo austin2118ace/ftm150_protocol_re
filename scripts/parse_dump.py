@@ -1,5 +1,4 @@
-import os
-from concurrent.futures import ProcessPoolExecutor
+import pickle
 from pathlib import Path
 from tqdm import tqdm
 DATA_PATH = Path("../dumps/13032026184550_ftm150rasp_i2c_capture.txt")
@@ -36,6 +35,11 @@ def main():
     packets = dumpfile_to_packets(contents)
     for packet in packets[:10]:
         print(packet, '\n')
+
+def save_packets(packets: list[Packet], data_path: Path):
+    filename = data_path.parent.joinpath(data_path.stem + "packets").with_suffix("pkl")
+
+
 
 def dumpfile_to_packets(dumpfile_contents: list):
     packets = []

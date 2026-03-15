@@ -1,3 +1,5 @@
+import os
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from tqdm import tqdm
 DATA_PATH = Path("../dumps/13032026184550_ftm150rasp_i2c_capture.txt")
@@ -5,11 +7,50 @@ r_bar='| {n:.1f}MB/{total:.1f}MB [{elapsed}<{remaining}, ' '{rate_fmt}{postfix}]
 PBARDESC = f"{{l_bar}}{{bar}}{r_bar}"
 
 B_IN_MB = 1024**2
+CHUNKS_TO_SKIP = ["\n", "[S]", "[P]", 'ADDR', '']
+
+class Packet:
+    def __init__(self, line: str, num: int):
+        self._line = line
+        self._chunked_line = self.chunk_line(self._line)
+        self.packet_num = num
+        self.addr = self._chunked_line[0]
+        self.read_write = self._chunked_line[1]
+        self.data = self._chunked_line[2:]
+
+    def __str__(self):
+        return (f"FTM150 Packet: {self.packet_num}\n"
+                f"Address: {self.addr}\n"
+                f"Address Bits: {bin(int(self.addr, 16))}\n"
+                f"Read/Write: {self.read_write}\n"
+                f"Data: {self.data}")
+
+    @staticmethod
+    def chunk_line(line):
+        return [chunk for chunk in line.split(" ")[:-1] if chunk not in CHUNKS_TO_SKIP]
+        # split at spaces and drop the newline
 
 
 def main():
     contents, num_lines = read_dumpfile()
-    print(num_lines)
+    packets = dumpfile_to_packets(contents)
+    for packet in packets[:10]:
+        print(packet, '\n')
+
+def dumpfile_to_packets(dumpfile_contents: list):
+    packets = []
+    packet_num = 0
+    for line in tqdm(dumpfile_contents):
+        if 'I2C' in line or 'x' not in line:
+            # Skip the lines from the Bus Pirate and blank lines without an address
+            continue
+        packet_num += 1
+        packets.append(Packet(line, packet_num))
+
+    return packets
+
+
+
 
 def read_dumpfile() -> tuple[list, int]:
     filesizembytes = DATA_PATH.stat().st_size / B_IN_MB

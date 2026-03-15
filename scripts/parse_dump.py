@@ -31,14 +31,31 @@ class Packet:
 
 
 def main():
-    contents, num_lines = read_dumpfile()
-    packets = dumpfile_to_packets(contents)
-    for packet in packets[:10]:
-        print(packet, '\n')
+    packets = []
+
+    try:
+        packets = load_packets(DATA_PATH)
+    except (IOError, OSError, FileNotFoundError) as e:
+        print(f"{DATA_PATH} has not been parsed into packets")
+    if not packets:
+        contents, num_lines = read_dumpfile()
+        packets = dumpfile_to_packets(contents)
+        save_packets(packets, DATA_PATH)
+
+
+
+def packet_filepath(data_path: Path) -> Path:
+    return data_path.parent.joinpath(data_path.stem + "_packets.pkl")
+
+
+def load_packets(data_path: Path) -> list[Packet]:
+    with open(packet_filepath(data_path), "rb") as f:
+        return pickle.load(f)
+
 
 def save_packets(packets: list[Packet], data_path: Path):
-    filename = data_path.parent.joinpath(data_path.stem + "packets").with_suffix("pkl")
-
+    with open(packet_filepath(data_path), "wb") as f:
+        pickle.dump(packets, f)
 
 
 def dumpfile_to_packets(dumpfile_contents: list):
@@ -52,8 +69,6 @@ def dumpfile_to_packets(dumpfile_contents: list):
         packets.append(Packet(line, packet_num))
 
     return packets
-
-
 
 
 def read_dumpfile() -> tuple[list, int]:
